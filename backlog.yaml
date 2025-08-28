@@ -1,0 +1,546 @@
+project: "Marketplace for Vending, ATM & Physical Asset Trading"
+version: "backlog-v1"
+epics:
+  - id: EPIC-01
+    title: "User Accounts & KYC"
+    priority: P0
+    stories:
+      - id: STORY-01.01
+        title: "Account registration"
+        effort: S
+        priority: P0
+        description: "Email/password + OAuth signup, email verification, signup rate-limits."
+        acceptance_criteria:
+          - "Users can register via email/password or OAuth (Google)."
+          - "Email verification flow implemented and required for key actions."
+          - "Signups rate-limited per IP."
+        tasks:
+          - "Frontend: registration form & client validation"
+          - "Backend: auth endpoints, user model, email verification token"
+          - "Implement rate-limiter"
+      - id: STORY-01.02
+        title: "Basic profile & phone verification"
+        effort: S
+        priority: P0
+        description: "Collect name & phone, phone OTP verification."
+        acceptance_criteria:
+          - "Phone OTP can be requested and verified via SMS provider."
+          - "Profile persisted and editable."
+        tasks:
+          - "Integrate SMS provider"
+          - "UI for phone + OTP entry"
+      - id: STORY-01.03
+        title: "KYC (ID capture + verification)"
+        effort: M
+        priority: P0
+        description: "ID upload + selfie liveness; vendor integration returns PASS/REVIEW/FAIL."
+        acceptance_criteria:
+          - "Sellers posting high-value items must submit ID and selfie."
+          - "KYC status displayed in profile (PASS/REVIEW/FAIL)."
+          - "Admin override UI present."
+        tasks:
+          - "Integrate identity vendor (Onfido/Persona style)"
+          - "Secure storage for docs, PII encryption"
+          - "Admin review screen"
+        dependencies:
+          - EPIC-15
+          - EPIC-10
+      - id: STORY-01.04
+        title: "Business accounts & KYB"
+        effort: M
+        priority: P1
+        description: "Organizations onboarding, EIN upload, admin users."
+        acceptance_criteria:
+          - "Organization record created with docs"
+          - "Org admins can invite/manage users"
+        tasks:
+          - "KYB vendor integration"
+          - "Org schema + UI"
+
+  - id: EPIC-02
+    title: "Listings (Create / Edit / View)"
+    priority: P0
+    stories:
+      - id: STORY-02.01
+        title: "Listing creation wizard"
+        effort: L
+        priority: P0
+        description: "5-step wizard: basic info, photos (min 4), condition checklist, logistics, publish."
+        acceptance_criteria:
+          - "Draft autosaves"
+          - "Min 4 photos required"
+          - "Geocode address to lat/lon"
+          - "Duplicate serial detection warns and flags admin review"
+        tasks:
+          - "Frontend: wizard & validation"
+          - "Image uploader + CDN hooks"
+          - "Backend: listing endpoints + serial duplicate check"
+          - "Integrate geocoding"
+        dependencies:
+          - EPIC-14
+          - EPIC-10
+      - id: STORY-02.02
+        title: "Multi-unit / bulk listing"
+        effort: M
+        priority: P1
+        description: "Support quantity >1 with per-unit or bulk pricing tiers."
+        acceptance_criteria:
+          - "Seller can set quantity and bulk price tiers"
+          - "Listing shows per-unit & bulk price calculations"
+        tasks:
+          - "DB model: quantity & bulk tiers"
+          - "UI: bulk pricing editor"
+      - id: STORY-02.03
+        title: "Listing detail page"
+        effort: S
+        priority: P0
+        description: "Public listing page with metadata, photos, inspection badge, buy/auction controls."
+        acceptance_criteria:
+          - "Listing page displays required metadata and photos"
+          - "Inspection badge links to report if available"
+        tasks:
+          - "Template & frontend"
+          - "SEO/meta tags"
+      - id: STORY-02.04
+        title: "Edit, unpublish, duplicate detection"
+        effort: M
+        priority: P0
+        description: "Edit/unpublish flows and duplicate serial blocking w/admin queue."
+        acceptance_criteria:
+          - "Sellers can edit/unpublish"
+          - "Serial duplicates flagged; admin queue entry created"
+        tasks:
+          - "Edit/unpublish endpoints"
+          - "Duplicate serial admin workflow"
+
+  - id: EPIC-03
+    title: "Search, Browse & Filters"
+    priority: P0
+    stories:
+      - id: STORY-03.01
+        title: "Search & basic filters"
+        effort: S
+        priority: P0
+        description: "Keyword search + category, condition, price range, location radius."
+        acceptance_criteria:
+          - "Search returns relevant listings"
+          - "Filters operate combinatorially and are performant"
+        tasks:
+          - "Integrate search engine (Algolia/Elastic)"
+          - "API + frontend filters"
+      - id: STORY-03.02
+        title: "Sorting, saved searches & saved sellers"
+        effort: M
+        priority: P1
+        description: "Users can save searches and follow sellers."
+        acceptance_criteria:
+          - "Saved searches persist and can trigger notifications"
+          - "Users can follow/unfollow sellers"
+        tasks:
+          - "Saved search model"
+          - "Push/email trigger for matches"
+
+  - id: EPIC-04
+    title: "Auctions & Bidding"
+    priority: P0
+    stories:
+      - id: STORY-04.01
+        title: "Timed auction listing type"
+        effort: M
+        priority: P0
+        description: "Set start/end time, reserve price, min increment, auto-extend."
+        acceptance_criteria:
+          - "Auction created with configured parameters"
+          - "State transitions (scheduled->live->ended)"
+        tasks:
+          - "Auction scheduler"
+      - id: STORY-04.02
+        title: "Place bid + proxy bidding"
+        effort: M
+        priority: P0
+        description: "Support direct and proxy (max) bids; concurrency-safe."
+        acceptance_criteria:
+          - "Bids accepted if bidder verified"
+          - "Proxy bids auto-increase up to max"
+        tasks:
+          - "Bid endpoints with concurrency control"
+          - "Bid history records"
+      - id: STORY-04.03
+        title: "Auto-extend & late-bid handling"
+        effort: S
+        priority: P0
+        description: "Extend auction time if bid in last X minutes."
+        acceptance_criteria:
+          - "Auto-extend triggers when applicable"
+        tasks:
+          - "Timer service"
+          - "Notifications on extension"
+      - id: STORY-04.04
+        title: "Auction winner flows"
+        effort: M
+        priority: P0
+        description: "Winner notified and given payment window; checkout link."
+        acceptance_criteria:
+          - "Winner receives checkout link"
+          - "Payment window enforced; non-payment triggers re-list or admin action"
+        tasks:
+          - "Notification templates"
+          - "Integration with payments & escrow (EPIC-06)"
+
+  - id: EPIC-05
+    title: "Buy Now / Offers / Checkout"
+    priority: P0
+    stories:
+      - id: STORY-05.01
+        title: "Buy Now flow"
+        effort: S
+        priority: P0
+        description: "Checkout showing fees, tax estimate, shipping estimate; triggers escrow charge."
+        acceptance_criteria:
+          - "Buyer sees fee breakdown"
+          - "Escrow payment initiated on confirm"
+        tasks:
+          - "Checkout UI"
+          - "Fee calculator service"
+      - id: STORY-05.02
+        title: "Make Offer + counteroffer"
+        effort: M
+        priority: P0
+        description: "Negotiation flow: offer, accept, counter; accepted offer triggers escrow."
+        acceptance_criteria:
+          - "Offers persist and notify seller"
+          - "Seller can accept/reject/counter"
+        tasks:
+          - "Offer model and endpoints"
+          - "UI for negotiation"
+
+  - id: EPIC-06
+    title: "Payments & Escrow"
+    priority: P0
+    stories:
+      - id: STORY-06.01
+        title: "Integrate payment provider + escrow holding"
+        effort: L
+        priority: P0
+        description: "Collect funds and hold in escrow until release conditions met. Support card + ACH."
+        acceptance_criteria:
+          - "Payments tokenized and stored minimally"
+          - "Escrow lifecycle: hold -> release -> refund"
+        tasks:
+          - "Select provider (Stripe/Adyen/etc)"
+          - "Implement escrow state machine"
+          - "Payout scheduling for sellers"
+        dependencies:
+          - Legal decision: escrow model
+      - id: STORY-06.02
+        title: "Refunds & chargeback handling"
+        effort: M
+        priority: P1
+        description: "Admin-triggered refunds and automated partial refunds for inspection failures."
+        acceptance_criteria:
+          - "Admin can issue full/partial refunds"
+          - "Chargeback detection and reconciliation"
+        tasks:
+          - "Refund endpoints"
+          - "Accounting reconciliation flows"
+      - id: STORY-06.03
+        title: "Fee accounting & settlement"
+        effort: M
+        priority: P1
+        description: "Compute platform fees, maintain ledger, manage payouts."
+        acceptance_criteria:
+          - "Ledger entries for fees, sales, refunds"
+          - "Payout run exports"
+        tasks:
+          - "Ledger model"
+          - "Payout integration"
+
+  - id: EPIC-07
+    title: "Logistics & Shipping"
+    priority: P0
+    stories:
+      - id: STORY-07.01
+        title: "Shipping options & freight quote request"
+        effort: M
+        priority: P0
+        description: "Listing-level shipping options: buyer pickup, seller shipping, freight quote request."
+        acceptance_criteria:
+          - "Shipping options appear on listing"
+          - "Freight quote requests capture dimensions & weight"
+        tasks:
+          - "Shipping options UI"
+          - "Freight quote request flow"
+      - id: STORY-07.02
+        title: "Scheduling pickup & label generation"
+        effort: M
+        priority: P1
+        description: "Generate labels & schedule pickups for shippable items."
+        acceptance_criteria:
+          - "Label generation for supported carriers"
+          - "Pickup scheduling triggers carrier booking"
+        tasks:
+          - "Carrier API integration"
+      - id: STORY-07.03
+        title: "Freight booking + tracking"
+        effort: L
+        priority: P2
+        description: "3PL booking and tracking UI for heavy items."
+        acceptance_criteria:
+          - "Bookings create tracking events"
+        tasks:
+          - "3PL partner integration"
+      - id: STORY-07.04
+        title: "Delivery confirmation triggers escrow release"
+        effort: S
+        priority: P0
+        description: "Escrow releases after confirmed delivery OR buyer acceptance/timebox."
+        acceptance_criteria:
+          - "Tracking status updates escrow state"
+          - "Timeout release triggers if buyer doesn't accept within window"
+        tasks:
+          - "Link shipment tracking to escrow machine"
+
+  - id: EPIC-08
+    title: "Inspections & Verification"
+    priority: P0
+    stories:
+      - id: STORY-08.01
+        title: "Request inspection + schedule"
+        effort: M
+        priority: P0
+        description: "Schedule inspector slot; inspector uploads report + photos."
+        acceptance_criteria:
+          - "Inspection scheduled and tracked"
+          - "Inspector can upload signed report"
+        tasks:
+          - "Scheduling UI"
+          - "Inspector portal"
+      - id: STORY-08.02
+        title: "Inspection report & badge"
+        effort: S
+        priority: P0
+        description: "Passed inspections show badge and link to report."
+        acceptance_criteria:
+          - "Badge appears on listing after pass"
+          - "Report accessible to buyers"
+        tasks:
+          - "Badge display implementation"
+      - id: STORY-08.03
+        title: "Certified refurbisher network"
+        effort: M
+        priority: P1
+        description: "Partners can mark listings as refurbished and add certification."
+        acceptance_criteria:
+          - "Refurbisher badge visible"
+        tasks:
+          - "Partner onboarding & permissions"
+
+  - id: EPIC-09
+    title: "Messaging, Notifications & Activity"
+    priority: P0
+    stories:
+      - id: STORY-09.01
+        title: "In-platform messaging"
+        effort: M
+        priority: P0
+        description: "Buyer/seller messages with attachments; message tied to listing."
+        acceptance_criteria:
+          - "Message history persists and is retrievable"
+          - "Attachments supported"
+        tasks:
+          - "Messaging backend (realtime/polling)"
+          - "Attachments storage"
+      - id: STORY-09.02
+        title: "Notifications"
+        effort: S
+        priority: P0
+        description: "Email + in-app notifications for key events."
+        acceptance_criteria:
+          - "Templates for bid, outbid, auction win, payment due, shipment updates"
+        tasks:
+          - "Notification queue & email provider integration"
+
+  - id: EPIC-10
+    title: "Admin, Moderation & Disputes"
+    priority: P0
+    stories:
+      - id: STORY-10.01
+        title: "Admin dashboard for KYC, disputes, flagged listings"
+        effort: M
+        priority: P0
+        description: "Admin UI to manage KYC, review flagged listings, suspend users."
+        acceptance_criteria:
+          - "Admin role-based access"
+          - "Can view/override KYC"
+        tasks:
+          - "Admin UI & RBAC"
+      - id: STORY-10.02
+        title: "Dispute resolution workflow"
+        effort: M
+        priority: P0
+        description: "Open->evidence->inspection->mediation->resolution lifecycle."
+        acceptance_criteria:
+          - "Disputes record evidence and timelines"
+        tasks:
+          - "Dispute model & admin tools"
+
+  - id: EPIC-11
+    title: "Fraud Prevention & Risk"
+    priority: P0
+    stories:
+      - id: STORY-11.01
+        title: "Serial number blacklist checks"
+        effort: M
+        priority: P0
+        description: "Cross-check serials against blacklist on listing create."
+        acceptance_criteria:
+          - "Blacklist check performed and flagged"
+        tasks:
+          - "Integrate stolen-goods DB or internal table"
+      - id: STORY-11.02
+        title: "Suspicious behavior detection & flagging"
+        effort: M
+        priority: P0
+        description: "Rules to detect bots, rapid bids, location mismatch."
+        acceptance_criteria:
+          - "Flagging rules fire and create admin alerts"
+        tasks:
+          - "Rules engine implementation"
+      - id: STORY-11.03
+        title: "Rate limit bidding & anti-sniping measures"
+        effort: S
+        priority: P0
+        description: "Enforce bid rate limits and auction auto-extend anti-sniping."
+        acceptance_criteria:
+          - "Rate-limiter in place"
+          - "Anti-sniping auto-extend functions"
+        tasks:
+          - "Implement rate-limiter and auction timer logic"
+
+  - id: EPIC-12
+    title: "Integrations & APIs"
+    priority: P1
+    stories:
+      - id: STORY-12.01
+        title: "Public read-only listing API"
+        effort: M
+        priority: P1
+        description: "Partner API to read listings; key-based & rate-limited."
+        acceptance_criteria:
+          - "API docs and key issuance"
+        tasks:
+          - "Read endpoints & docs"
+      - id: STORY-12.02
+        title: "Partner webhooks for events"
+        effort: S
+        priority: P1
+        description: "Webhooks for sold, payment, shipment events."
+        acceptance_criteria:
+          - "Webhook subscriptions and delivery retries"
+        tasks:
+          - "Webhook framework"
+
+  - id: EPIC-13
+    title: "Analytics, Reporting & Dashboards"
+    priority: P1
+    stories:
+      - id: STORY-13.01
+        title: "Seller dashboard"
+        effort: M
+        priority: P1
+        description: "Active listings, sales, fees, upcoming payouts."
+        acceptance_criteria:
+          - "Seller can view sales & fees"
+        tasks:
+          - "Reporting queries & UI"
+      - id: STORY-13.02
+        title: "Admin reports (GMV, disputes, fraud rate)"
+        effort: M
+        priority: P1
+        description: "Admin reporting & CSV export."
+        acceptance_criteria:
+          - "Admin exports for GMV, disputes, fraud"
+        tasks:
+          - "Aggregation pipelines"
+
+  - id: EPIC-14
+    title: "UX / Mobile / Photo Uploads"
+    priority: P0
+    stories:
+      - id: STORY-14.01
+        title: "Mobile-first listing photo capture flow"
+        effort: M
+        priority: P0
+        description: "Camera-first uploader with checklist prompts and auto-compress; require 4 photos."
+        acceptance_criteria:
+          - "Mobile uploader works and enforces min 4 images"
+        tasks:
+          - "Implement uploader component"
+      - id: STORY-14.02
+        title: "Image optimization & CDN"
+        effort: S
+        priority: P0
+        description: "Store and serve optimized images via CDN."
+        acceptance_criteria:
+          - "Images resized and cached"
+        tasks:
+          - "Image processing pipeline"
+
+  - id: EPIC-15
+    title: "Ops & Infra"
+    priority: P0
+    stories:
+      - id: STORY-15.01
+        title: "PCI & PII compliance baseline"
+        effort: L
+        priority: P0
+        description: "Minimize PCI scope, encrypt PII at rest, audit logs."
+        acceptance_criteria:
+          - "Tokenized payments, PII encrypted, audit logs enabled"
+        tasks:
+          - "Security review, vault setup"
+      - id: STORY-15.02
+        title: "CI/CD, staging, and monitoring"
+        effort: M
+        priority: P0
+        description: "Automated tests, deployment pipelines, error & metrics monitoring."
+        acceptance_criteria:
+          - "CI runs on PRs, staging deploys, monitoring & alerts configured"
+        tasks:
+          - "Build pipelines, Sentry/Prometheus setup"
+
+mvp_bucket:
+  description: "Minimum recommended P0 stories to launch a usable marketplace"
+  stories:
+    - "STORY-01.01"
+    - "STORY-01.02"
+    - "STORY-01.03"
+    - "STORY-02.01"
+    - "STORY-02.03"
+    - "STORY-02.04"
+    - "STORY-03.01"
+    - "STORY-04.01"
+    - "STORY-04.02"
+    - "STORY-05.01"
+    - "STORY-06.01"
+    - "STORY-07.01"
+    - "STORY-07.04"
+    - "STORY-08.01"
+    - "STORY-08.02"
+    - "STORY-09.01"
+    - "STORY-09.02"
+    - "STORY-10.01"
+    - "STORY-10.02"
+    - "STORY-11.01"
+    - "STORY-11.03"
+    - "STORY-14.01"
+    - "STORY-14.02"
+    - "STORY-15.01"
+    - "STORY-15.02"
+
+next_steps_suggested:
+  - "Confirm MVP scope and prioritize the MVP bucket"
+  - "Select vendors: payment/escrow provider, identity verification, and a shipping partner"
+  - "Create top N sprint-ready tickets from MVP stories (I can convert to CSV/Jira format)"
+  - "Assign owners for integrations and legal to draft escrow/KYC policies"
+  - "Prepare staging test dataset (sample listings, serial blacklist, test payment accounts)"
